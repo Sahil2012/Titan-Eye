@@ -33,6 +33,7 @@ export default function ManageProducts() {
   }, [db]);
 
   const addProductToDb = async () => {
+    console.log(stockNo);
     if (stockNo !== "" && price !== "") {
       const productExists = products.some(
         (product) => product.stock_no === stockNo
@@ -40,7 +41,7 @@ export default function ManageProducts() {
 
       if (productExists) {
         alert("Product with this Stock No already exists.");
-        return; // Exit the function if the product already exists
+        return; 
       }
       try {
         const clientCollection = collection(db, "products");
@@ -53,6 +54,9 @@ export default function ManageProducts() {
         console.log(error);
         alert("Something went wrong, try to add later.");
       }
+      
+    } else {
+      alert(`Enter ${stockNo !== '' ? 'Price' : 'Stock No'} to add the product`)
     }
   };
 
@@ -80,6 +84,8 @@ export default function ManageProducts() {
       console.log(error);
       alert("Something went wrong, try to update later.");
     }
+    setStockNo("");
+    setPrice("");
   };
 
   return (
@@ -132,7 +138,7 @@ export default function ManageProducts() {
           >
             <div className="mr-10 w-[20px]">{index + 1} </div>
             <div className="mr-10 w-[180px]">{product.stock_no}</div>
-            <div className="mr-10 w-[50px]">{product.price}</div>
+            <div className="mr-10 w-[50px]">₹ {product.price}</div>
             <div
               className="cursor-pointer"
               onClick={() => openProductModal(product)}

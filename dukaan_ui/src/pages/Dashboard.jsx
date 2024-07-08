@@ -23,12 +23,13 @@ import OrderDetailsModal from "../components/OrderDetailsModal";
 export default function Dashboard() {
   const db = getFirestore();
   const [orders, setOrders] = useState([]);
-  const [filterDate, setFilterDate] = useState(new Date().toISOString().split('T')[0]);
-  const [orderSearch,setOrderSearch] = useState('');
-  const debounceSearchId = useDebounce(orderSearch,500);
+  const [filterDate, setFilterDate] = useState(
+    new Date().toISOString().split("T")[0]
+  );
+  const [orderSearch, setOrderSearch] = useState("");
+  const debounceSearchId = useDebounce(orderSearch, 500);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState(null);
-
 
   /*
   useEffect(() => {
@@ -58,11 +59,17 @@ export default function Dashboard() {
   useEffect(() => {
     // console.log(orderSearch);
     let q = null;
-    if(orderSearch != '') {
-      q = query(collection(db, "orders"), where("billReferenceNumber","==",orderSearch));
-      
+    if (orderSearch != "") {
+      q = query(
+        collection(db, "orders"),
+        where("billReferenceNumber", "==", orderSearch)
+      );
     } else {
-      q = query(collection(db, "orders"), where("date","==",filterDate), orderBy("date", "desc") );
+      q = query(
+        collection(db, "orders"),
+        where("date", "==", filterDate),
+        orderBy("date", "desc")
+      );
     }
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
       const ordersData = [];
@@ -73,13 +80,13 @@ export default function Dashboard() {
     });
     // console.log(filterDate);
     return () => unsubscribe();
-  },[filterDate,debounceSearchId]);
+  }, [filterDate, debounceSearchId]);
 
   const handleStatusChange = async (id, newStatus) => {
-    const orderDoc = doc(db, 'orders', id);
-    
-    console.log('called' + id + newStatus);
-    const op = await updateDoc(orderDoc, { status: newStatus});
+    const orderDoc = doc(db, "orders", id);
+
+    console.log("called" + id + newStatus);
+    const op = await updateDoc(orderDoc, { status: newStatus });
     console.log(op);
     setOrders((prevOrders) =>
       prevOrders.map((order) =>
@@ -92,11 +99,6 @@ export default function Dashboard() {
     <div className="flex relative">
       <div className="grow">
 
-        <div className="flex pt-8 flex-wrap">
-            <RevenueCard title={'Amount Pending'} warning={true} amount={92301.2} orders={13}/>
-            <RevenueCard title={'Amount Pending'} warning={true} amount={92301.2} orders={13}/>
-            <RevenueCard title={'Amount Processed'} warning={true} amount={213456.72}/>
-        </div>
         <div className="mt-4 mx-2 p-4">
           <div className="flex justify-between items-center my-2">
             <div>
@@ -107,17 +109,20 @@ export default function Dashboard() {
               />
             </div>
             <div className="mb-4">
-        <input
-          type="date"
-          id="filterDate"
-          className="mt-2 p-2 border rounded w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
-          value={filterDate}
-          onChange={(e) => {setFilterDate(e.target.value); setOrderSearch('');}}
-        />
-      </div>
+              <input
+                type="date"
+                id="filterDate"
+                className="mt-2 p-2 border rounded w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                value={filterDate}
+                onChange={(e) => {
+                  setFilterDate(e.target.value);
+                  setOrderSearch("");
+                }}
+              />
+            </div>
           </div>
-          <TableHead orderIcon={true} feesIcon={true} />
-          {orders.map((order) => (
+          <TableHead orderIcon={false} feesIcon={true} />
+          {orders.length != 0 ? orders.map((order) => (
             <TableRowItem
               key={order.id}
               orderId={order.billReferenceNumber}
@@ -127,12 +132,12 @@ export default function Dashboard() {
               handleStatusChange={handleStatusChange}
               handleOpenModal={handleOpenModal}
             />
-          ))}
+          )) : <div className="bg-gray-300 justify-center flex py-4 text-[#ffffff]">No Records to show</div>}
         </div>
-        <OrderDetailsModal 
+        <OrderDetailsModal
           orderId={selectedOrder}
-          isOpen = {isModalOpen}
-          onClose= {handleCloseModal}
+          isOpen={isModalOpen}
+          onClose={handleCloseModal}
         />
       </div>
     </div>

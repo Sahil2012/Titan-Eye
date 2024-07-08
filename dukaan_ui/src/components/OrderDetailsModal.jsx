@@ -64,9 +64,9 @@ const OrderDetailsModal = ({ orderId, isOpen, onClose }) => {
               >
                 <div className="mr-10 w-[5px]">{index + 1}</div>
                 <div className="mr-10 w-[100px]">{product.skuCode}</div>
-                <div className="mr-10 w-[50px]">{product.price_per_unit}</div>
+                <div className="mr-10 w-[50px]">₹{product.price_per_unit}</div>
                 <div className="mr-10 w-[20px]">{product.quantity}</div>
-                <div>{product.total_price}</div>
+                <div>₹{product.total_price}</div>
               </div>
               
 
@@ -75,10 +75,10 @@ const OrderDetailsModal = ({ orderId, isOpen, onClose }) => {
         </div>
         <div className="gap-4">
                 <div>Total Quantity : {orderDetails.totalQuantity}</div>
-                <div>Total UCP : {orderDetails.totalCost}</div>
+                <div>Total UCP : ₹{orderDetails.totalCost}</div>
                 <div>LESS : {orderDetails.discount} %</div>
-                <div>Discount : {orderDetails.discountValue}</div>
-                <div>Total Value : {orderDetails.totalValue}</div>
+                <div>Discount : ₹{orderDetails.discountValue}</div>
+                <div>Total Value : ₹{orderDetails.totalValue}</div>
             </div>
         <button
           onClick={onClose}

@@ -22,7 +22,6 @@ export default function AddClients() {
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
       const clientsData = [];
       querySnapshot.forEach((doc) => {
-        console.log(doc.data());
         clientsData.push({ id: doc.id, ...doc.data() });
       });
       setClients(clientsData);
@@ -33,16 +32,25 @@ export default function AddClients() {
 
   const addClientToDb = async () => {
     if (clientName != "") {
+      const clientExists = clients.some(
+        (client) => client.name === clientName
+      );
+
+      if (clientExists) {
+        alert("Client with this Name already exists.");
+        return; // Exit the function if the product already exists
+      }
       try {
         const clientCollection = collection(db, "client");
         const op = await addDoc(clientCollection, { name: clientName });
-        console.log(op);
         let cl = [...clients];
         cl.push({ name: clientName, id: op.id });
         setClients(cl);
       } catch (error) {
         alert("Something went wrong try to add later.");
       }
+    } else {
+      alert("Enter Client name to add.");
     }
   };
   return (
