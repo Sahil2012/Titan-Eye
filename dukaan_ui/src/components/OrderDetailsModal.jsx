@@ -1,3 +1,4 @@
+import React, { useEffect, useState } from "react";
 import {
   collection,
   getFirestore,
@@ -5,7 +6,7 @@ import {
   query,
   where,
 } from "firebase/firestore";
-import React, { useEffect, useState } from "react";
+import * as XLSX from "xlsx";
 
 const OrderDetailsModal = ({ orderId, isOpen, onClose }) => {
   const [orderDetails, setOrderDetails] = useState(null);
@@ -30,10 +31,49 @@ const OrderDetailsModal = ({ orderId, isOpen, onClose }) => {
     return () => unsubscribe();
   }, [db, orderId]);
 
+  const handleDownload = () => {
+    if (!orderDetails) return;
+
+    // Convert order details to Excel format
+    const workbook = XLSX.utils.book_new();
+    const worksheetData = [
+      ["Bill No", "Date", "Dealer Name", "Town", "Stock Type"],
+      [
+        orderDetails.billReferenceNumber,
+        orderDetails.date,
+        orderDetails.dealerName,
+        orderDetails.city,
+        orderDetails.stockType,
+      ],
+      [],
+      ["S.No", "SKU Code", "Price", "Quantity", "Total Price"],
+      ...orderDetails.products.map((product, index) => [
+        index + 1,
+        product.skuCode,
+        product.price_per_unit,
+        product.quantity,
+        product.total_price,
+      ]),
+      [],
+      ["Total Quantity", "Total UCP", "LESS", "Discount", "Total Value"],
+      [
+        orderDetails.totalQuantity,
+        orderDetails.totalCost,
+        `${orderDetails.discount} %`,
+        orderDetails.discountValue,
+        orderDetails.totalValue,
+      ],
+    ];
+
+    const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Order Details");
+
+    XLSX.writeFile(workbook, `Order_Details_${orderDetails.billReferenceNumber}.xlsx`);
+  };
+
   if (!isOpen || !orderDetails) {
     return null;
   }
-
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
@@ -58,7 +98,7 @@ const OrderDetailsModal = ({ orderId, isOpen, onClose }) => {
           </div>
           {orderDetails.products &&
             orderDetails.products.map((product, index) => (
-                <div
+              <div
                 key={index}
                 className="flex py-2 px-2 font-medium border-b-2 border-x-2 justify-around"
               >
@@ -68,24 +108,29 @@ const OrderDetailsModal = ({ orderId, isOpen, onClose }) => {
                 <div className="mr-10 w-[20px]">{product.quantity}</div>
                 <div>₹{product.total_price}</div>
               </div>
-              
-
             ))}
-            
         </div>
         <div className="gap-4">
-                <div>Total Quantity : {orderDetails.totalQuantity}</div>
-                <div>Total UCP : ₹{orderDetails.totalCost}</div>
-                <div>LESS : {orderDetails.discount} %</div>
-                <div>Discount : ₹{orderDetails.discountValue}</div>
-                <div>Total Value : ₹{orderDetails.totalValue}</div>
-            </div>
-        <button
-          onClick={onClose}
-          className="mt-4 py-2 px-4 bg-red-500 text-white rounded hover:bg-red-700"
-        >
-          Close
-        </button>
+          <div>Total Quantity : {orderDetails.totalQuantity}</div>
+          <div>Total UCP : ₹{orderDetails.totalCost}</div>
+          <div>LESS : {orderDetails.discount} %</div>
+          <div>Discount : ₹{orderDetails.discountValue}</div>
+          <div>Total Value : ₹{orderDetails.totalValue}</div>
+        </div>
+        <div className="flex justify-between mt-4">
+          <button
+            onClick={handleDownload}
+            className="py-2 px-4 bg-green-500 text-white rounded hover:bg-green-700"
+          >
+            Download
+          </button>
+          <button
+            onClick={onClose}
+            className="py-2 px-4 bg-red-500 text-white rounded hover:bg-red-700"
+          >
+            Close
+          </button>
+        </div>
       </div>
     </div>
   );
