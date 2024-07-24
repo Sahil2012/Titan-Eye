@@ -20,12 +20,16 @@ export default function ManageProducts() {
   const [openErrorModal, setOpenErrorModal] = useState(false);
   const [modalMessage, setModalMessage] = useState("");
   const [fileInputKey, setFileInputKey] = useState(Date.now());
+  const [loading, setLoading] = useState(true); // Loader state
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const [entriesPerPage] = useState(20);
 
   const fileInputRef = useRef(null);
-
   const db = getFirestore();
 
   useEffect(() => {
+    setLoading(true);
     const q = query(collection(db, "products"));
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
       const productLocal = [];
@@ -34,9 +38,13 @@ export default function ManageProducts() {
       });
 
       setProducts(productLocal);
+      setLoading(false); 
     });
 
-    return () => unsubscribe();
+    return () => {
+      unsubscribe();
+      setLoading(false); 
+    };
   }, [db]);
 
   const addProductToDb = async () => {
@@ -55,7 +63,6 @@ export default function ManageProducts() {
         await setDoc(productRef, { stock_no: stockNo, price: price });
         setProducts((prevProducts) => [
           ...prevProducts,
-          { stock_no: stockNo, price: price, id: stockNo },
         ]);
       } catch (error) {
         console.log(error);
@@ -145,8 +152,20 @@ export default function ManageProducts() {
     reader.readAsArrayBuffer(file);
   };
 
+  // Pagination Logic
+  const indexOfLastProduct = currentPage * entriesPerPage;
+  const indexOfFirstProduct = indexOfLastProduct - entriesPerPage;
+  const currentProducts = products.slice(indexOfFirstProduct, indexOfLastProduct);
+
+  const paginate = (pageNumber) => setCurrentPage(pageNumber);
+
   return (
     <div className="container mx-auto px-4 py-6">
+      {loading && (
+        <div className="fixed inset-0 flex items-center justify-center bg-gray-100 opacity-75 z-50">
+          <div className="w-16 h-16 border-4 border-blue-500 border-dashed rounded-full animate-spin"></div>
+        </div>
+      )}
       <div className="flex flex-col gap-4 sm:flex-row sm:gap-6 lg:gap-8">
         <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 lg:gap-8">
           <input
@@ -190,77 +209,76 @@ export default function ManageProducts() {
           <div className="w-3/12 text-center text-xs sm:text-sm md:text-base lg:text-lg">Price</div>
           <div className="w-4/12 text-center text-xs sm:text-sm md:text-base lg:text-lg">Actions</div>
         </div>
-        {products.map((product, index) => (
+        {currentProducts.map((product, index) => (
           <div
             key={product.id}
             className="flex flex-wrap items-center py-2 px-4 border-b border-gray-200"
           >
-            <div className="w-1/12 text-center text-xs sm:text-sm md:text-base lg:text-lg">{index + 1}</div>
+            <div className="w-1/12 text-center text-xs sm:text-sm md:text-base lg:text-lg">{index + 1 + indexOfFirstProduct}</div>
             <div className="w-4/12 text-center text-xs sm:text-sm md:text-base lg:text-lg truncate">{product.stock_no}</div>
             <div className="w-3/12 text-center text-xs sm:text-sm md:text-base lg:text-lg">₹ {product.price}</div>
             <div className="w-4/12 text-center">
               <button
                 onClick={() => openProductModal(product)}
-                className="text-blue-500 hover:text-blue-600"
+                className="bg-yellow-500 text-white font-semibold py-1 px-3 rounded-md hover:bg-yellow-600"
               >
-                <Edit />
+                <Edit className="w-5 h-5" />
               </button>
             </div>
           </div>
         ))}
       </div>
 
-      <Modal
-        open={openModal}
-        onClose={closeProductModal}
-        aria-labelledby="modal-modal-title"
-        aria-describedby="modal-modal-description"
-        className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4"
-      >
-        <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
-          <h2 className="text-xl font-bold mb-4">Edit Product</h2>
+      {/* Pagination */}
+      <div className="flex justify-between mt-6">
+        <button
+          onClick={() => paginate(currentPage - 1)}
+          disabled={currentPage === 1}
+          className="bg-blue-500 text-white font-semibold py-2 px-4 rounded-md hover:bg-blue-600 mr-2"
+        >
+          Previous
+        </button>
+        <button
+          onClick={() => paginate(currentPage + 1)}
+          disabled={indexOfLastProduct >= products.length}
+          className="bg-blue-500 text-white font-semibold py-2 px-4 rounded-md hover:bg-blue-600"
+        >
+          Next
+        </button>
+      </div>
+
+      {/* Modal for updating product */}
+      <Modal open={openModal} onClose={closeProductModal}>
+        <div className="bg-white p-6 rounded-md shadow-lg mx-auto mt-24 max-w-md">
+          <h2 className="text-xl font-semibold mb-4">Update Product</h2>
           <div className="mb-4">
-            <label
-              htmlFor="stockNo"
-              className="block text-sm font-medium text-gray-700"
-            >
-              Stock No
-            </label>
+            <label className="block text-sm font-medium text-gray-700">Stock No</label>
             <input
               type="text"
-              id="stockNo"
-              name="stockNo"
               value={stockNo}
               readOnly
-              className="mt-1 block w-full border-gray-300 rounded-md shadow-sm bg-gray-100 cursor-not-allowed"
+              className="mt-1 block w-full bg-gray-100 border border-gray-300 rounded-md shadow-sm sm:text-sm"
             />
           </div>
           <div className="mb-4">
-            <label
-              htmlFor="price"
-              className="block text-sm font-medium text-gray-700"
-            >
-              Price
-            </label>
+            <label className="block text-sm font-medium text-gray-700">Price</label>
             <input
               type="number"
-              id="price"
-              name="price"
               value={price}
               onChange={(e) => setPrice(e.target.value)}
-              className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm sm:text-sm"
             />
           </div>
           <div className="flex justify-end gap-4">
             <button
               onClick={updateProduct}
-              className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
+              className="bg-blue-500 text-white font-semibold py-2 px-4 rounded-md hover:bg-blue-600"
             >
               Update
             </button>
             <button
               onClick={closeProductModal}
-              className="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600"
+              className="bg-gray-300 text-gray-700 font-semibold py-2 px-4 rounded-md hover:bg-gray-400"
             >
               Cancel
             </button>
@@ -268,45 +286,31 @@ export default function ManageProducts() {
         </div>
       </Modal>
 
-      <Modal
-        open={openSuccessModal}
-        onClose={() => setOpenSuccessModal(false)}
-        aria-labelledby="success-modal-title"
-        aria-describedby="success-modal-description"
-        className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4"
-      >
-        <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
-          <h2 className="text-xl font-bold mb-4">Success</h2>
-          <p>{modalMessage}</p>
-          <div className="flex justify-end">
-            <button
-              onClick={() => setOpenSuccessModal(false)}
-              className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
-            >
-              Close
-            </button>
-          </div>
+      {/* Success Modal */}
+      <Modal open={openSuccessModal} onClose={() => setOpenSuccessModal(false)}>
+        <div className="bg-green-100 p-6 rounded-md shadow-lg mx-auto mt-24 max-w-md">
+          <h2 className="text-xl font-semibold mb-4 text-green-700">Success</h2>
+          <p className="text-gray-700">{modalMessage}</p>
+          <button
+            onClick={() => setOpenSuccessModal(false)}
+            className="mt-4 bg-green-500 text-white font-semibold py-2 px-4 rounded-md hover:bg-green-600"
+          >
+            Close
+          </button>
         </div>
       </Modal>
 
-      <Modal
-        open={openErrorModal}
-        onClose={() => setOpenErrorModal(false)}
-        aria-labelledby="error-modal-title"
-        aria-describedby="error-modal-description"
-        className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4"
-      >
-        <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
-          <h2 className="text-xl font-bold mb-4">Error</h2>
-          <p>{modalMessage}</p>
-          <div className="flex justify-end">
-            <button
-              onClick={() => setOpenErrorModal(false)}
-              className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600"
-            >
-              Close
-            </button>
-          </div>
+      {/* Error Modal */}
+      <Modal open={openErrorModal} onClose={() => setOpenErrorModal(false)}>
+        <div className="bg-red-100 p-6 rounded-md shadow-lg mx-auto mt-24 max-w-md">
+          <h2 className="text-xl font-semibold mb-4 text-red-700">Error</h2>
+          <p className="text-gray-700">{modalMessage}</p>
+          <button
+            onClick={() => setOpenErrorModal(false)}
+            className="mt-4 bg-red-500 text-white font-semibold py-2 px-4 rounded-md hover:bg-red-600"
+          >
+            Close
+          </button>
         </div>
       </Modal>
     </div>
