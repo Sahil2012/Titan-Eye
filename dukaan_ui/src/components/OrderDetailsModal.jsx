@@ -36,8 +36,8 @@ const OrderDetailsModal = ({ orderId, isOpen, onClose }) => {
 
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50 min-w-[500px]">
-      <div className="bg-white p-4 rounded-lg shadow-lg gap-8">
+    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+      <div className="bg-white p-4 rounded-lg shadow-lg gap-8 min-w-[500px] w-[90vw] h-[80vh]">
         <h2 className="text-xl font-bold mb-4">Order Details</h2>
         <div className="flex justify-between">
           <div>Bill.No : {orderDetails.billReferenceNumber}</div>
