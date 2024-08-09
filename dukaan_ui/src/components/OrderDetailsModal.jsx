@@ -34,7 +34,6 @@ const OrderDetailsModal = ({ orderId, isOpen, onClose }) => {
   const handleDownload = () => {
     if (!orderDetails) return;
 
-    // Convert order details to Excel format
     const workbook = XLSX.utils.book_new();
     const worksheetData = [
       ["Bill No", "Date", "Dealer Name", "Town", "Stock Type"],
@@ -77,45 +76,47 @@ const OrderDetailsModal = ({ orderId, isOpen, onClose }) => {
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-      <div className="bg-white p-4 rounded-lg shadow-lg gap-8 min-w-[500px] w-[90vw] h-[80vh]">
+      <div className="bg-white p-4 rounded-lg shadow-lg w-[80vw] h-[70vh] max-w-screen-lg max-h-screen overflow-auto">
         <h2 className="text-xl font-bold mb-4">Order Details</h2>
-        <div className="flex justify-between">
-          <div>Bill.No : {orderDetails.billReferenceNumber}</div>
-          <div>Date : {orderDetails.date}</div>
+        <div className="flex flex-col gap-4 mb-4">
+          <div className="flex justify-between">
+            <div>Bill No: {orderDetails.billReferenceNumber}</div>
+            <div>Date: {orderDetails.date}</div>
+          </div>
+          <div>Dealer Name: {orderDetails.dealerName}</div>
+          <div className="flex justify-between">
+            <div>Town: {orderDetails.city}</div>
+            <div>Stock Type: {orderDetails.stockType}</div>
+          </div>
         </div>
-        <div>Dealer Name : {orderDetails.dealerName}</div>
-        <div className="flex justify-between">
-          <div>Town : {orderDetails.city}</div>
-          <div>Stock Type : {orderDetails.stockType}</div>
-        </div>
-        <div className="my-4">
-          <div className="flex justify-around font-medium bg-blue-500 text-white py-2 border-b-2 border-x-2">
-            <div className="mr-10 w-[5px]">S.no.</div>
-            <div className="mr-10 w-[100px]">SKU Code</div>
-            <div className="mr-10 w-[50px]">Price</div>
-            <div className="mr-10 w-[20px]">Quantity</div>
-            <div>Total Price</div>
+        <div className="my-4 overflow-x-auto">
+          <div className="flex font-medium bg-blue-500 text-white py-2 border-b-2 border-x-2 px-2">
+            <div className="mr-10 w-[5%]">S.No.</div>
+            <div className="mr-10 w-[30%]">SKU Code</div>
+            <div className="mr-10 w-[20%]">Quantity</div>
+            <div className="mr-10 w-[20%]">Price</div>
+            <div className="w-[25%]">Total Price</div>
           </div>
           {orderDetails.products &&
             orderDetails.products.map((product, index) => (
               <div
                 key={index}
-                className="flex py-2 px-2 font-medium border-b-2 border-x-2 justify-around"
+                className="flex py-2 px-2 font-medium border-b-2 border-x-2 justify-between"
               >
-                <div className="mr-10 w-[5px]">{index + 1}</div>
-                <div className="mr-10 w-[100px]">{product.skuCode}</div>
-                <div className="mr-10 w-[50px]">₹{product.price_per_unit}</div>
-                <div className="mr-10 w-[20px]">{product.quantity}</div>
-                <div>₹{product.total_price}</div>
+                <div className="mr-10 w-[5%]">{index + 1}</div>
+                <div className="mr-10 w-[30%]">{product.skuCode}</div>
+                <div className="mr-10 w-[20%]">{product.quantity}</div>
+                <div className="mr-10 w-[20%]">₹{product.price_per_unit}</div>
+                <div className="w-[25%]">₹{product.total_price}</div>
               </div>
             ))}
         </div>
-        <div className="gap-4">
-          <div>Total Quantity : {orderDetails.totalQuantity}</div>
-          <div>Total UCP : ₹{orderDetails.totalCost}</div>
-          <div>LESS : {orderDetails.discount} %</div>
-          <div>Discount : ₹{orderDetails.discountValue}</div>
-          <div>Total Value : ₹{orderDetails.totalValue}</div>
+        <div className="gap-4 mb-4">
+          <div>Total Quantity: {orderDetails.totalQuantity}</div>
+          <div>Total UCP: ₹{orderDetails.totalCost}</div>
+          <div>LESS: {orderDetails.discount} %</div>
+          <div>Discount: ₹{orderDetails.discountValue}</div>
+          <div>Total Value: ₹{orderDetails.totalValue}</div>
         </div>
         <div className="flex justify-between mt-4">
           <button
