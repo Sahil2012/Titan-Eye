@@ -17,7 +17,7 @@ import {
 } from "firebase/firestore";
 import useDebounce from "../hooks/useDebounce";
 import OrderDetailsModal from "../components/OrderDetailsModal";
-import { subDays } from "date-fns";  // Import date-fns for date manipulation
+import { addDays, endOfDay, format, roundToNearestHours, startOfDay, subDays } from "date-fns";  // Import date-fns for date manipulation
 import OvalButtons from "../components/OvalButtons";
 
 export default function Dashboard() {
@@ -34,6 +34,8 @@ export default function Dashboard() {
   const [pendingCount,setPendingCount] = useState(0);
   const [processedAmount,setAmountProcessed] = useState(0);
   const [pendingAmount,setAmountPending] = useState(0);
+  const [rejectedCount,setRejectedCount] = useState(0);
+  const [activeRejected,setActiveRejected] = useState(true);
 
   // Calculate the date 30 days ago from the selected date
   const getStartDate = () => {
@@ -42,19 +44,19 @@ export default function Dashboard() {
 
   useEffect(() => {
     let q = null;
-    const startDate = getStartDate();
-    const endDate = filterDate;
+    const startDate = startOfDay(getStartDate());
+    const endDate = startOfDay(addDays(filterDate,1));    
 
     if (orderSearch !== "") {
       q = query(
-        collection(db, "orders"),
+        collection(db, "order_details"),
         where("billReferenceNumber", "==", orderSearch)
       );
-    } else {
+    } else {      
       q = query(
-        collection(db, "orders"),
+        collection(db, "order_details"),
         where("date", ">=", Timestamp.fromDate(startDate)), // Use Firestore Timestamp
-        where("date", "<=", Timestamp.fromDate(endDate)),   // Use Firestore Timestamp
+        where("date", "<", Timestamp.fromDate(endDate)),   // Use Firestore Timestamp
         orderBy("date", "desc")
       );
     }
@@ -65,21 +67,27 @@ export default function Dashboard() {
       let pen = 0;
       let procAmt = 0;
       let penAmt = 0;
+      let rej = 0;
       querySnapshot.forEach((doc) => {
         ordersData.push({ id: doc.id, ...doc.data() });
         if(doc.data().status == 'Completed') {
           procAmt += doc.data().totalCost;
           comp ++;
+        } else if(doc.data().status == 'Rejected'){
+          rej ++;
         } else {
           penAmt += doc.data().totalCost;
           pen ++;
         }
       });
+      setRejectedCount(rej);
       setAmountPending(penAmt);
       setAmountProcessed(procAmt);
       setCompleteCount(comp);
       setPendingCount(pen);
       setOrders(ordersData);
+      // console.log(orders);
+      
     });
 
     return () => unsubscribe();
@@ -96,8 +104,10 @@ export default function Dashboard() {
     );
   };
 
-  const handleOpenModal = (orderId) => {
-    setSelectedOrder(orderId);
+  const handleOpenModal = (orderDetail) => {
+    
+    setSelectedOrder(orderDetail);
+    console.log(orderDetail);
     setIsModalOpen(true);
   };
 
@@ -118,6 +128,12 @@ export default function Dashboard() {
     setActivePending(!activePending);
     // setActiveComplete(false);
   }
+
+  const filterRejected = () => {
+    console.log("Rej");
+    setActiveRejected(!activeRejected);
+    
+  }
   return (
     <div className="flex relative">
       <div className="grow">
@@ -127,10 +143,10 @@ export default function Dashboard() {
           <RevenueCard title={"Amount Pending"} amount={pendingAmount} orders={pendingCount} warning={true}/>
         </div>
           
-        <div className="w-[350px] flex justify-around items-center">
+        <div className="flex gap-4 items-center">
           <OvalButtons text={"Completed"} count={completeCount} bgColor={`${activeComplete ? 'bg-blue-500' : 'bg-grey-700'}`} filterMe={filterCompleted} />
-          <div className="text-2xl text-center text-slate-500">|</div>
           <OvalButtons text={"Pending"} count={pendingCount} bgColor={`${activePending ? 'bg-blue-500' : 'bg-grey-700'}`} filterMe={filterPending}/>
+          <OvalButtons text={"Rejected"} count={rejectedCount} bgColor={`${activeRejected ? 'bg-blue-500' : 'bg-grey-700'}`} filterMe={filterRejected}/>
         </div>
           <div className="flex justify-between items-center my-2">
             <div>
@@ -163,7 +179,7 @@ export default function Dashboard() {
               orderDate={order.date.toDate().toISOString().split("T")[0]} // Display formatted date
               orderAmount={order.totalCost}
               status={order.status}
-              handleStatusChange={handleStatusChange}
+              orderDetail={order}
               handleOpenModal={handleOpenModal}
             /> : activePending && 
             <TableRowItem
@@ -172,13 +188,13 @@ export default function Dashboard() {
               orderDate={order.date.toDate().toISOString().split("T")[0]} // Display formatted date
               orderAmount={order.totalCost}
               status={order.status}
-              handleStatusChange={handleStatusChange}
+              orderDetail={order}
               handleOpenModal={handleOpenModal}
             />
           )) : <div className="bg-gray-300 justify-center flex py-4 text-[#ffffff]">No Records to show</div>}
         </div>
         <OrderDetailsModal
-          orderId={selectedOrder}
+          orderDetails={selectedOrder}
           isOpen={isModalOpen}
           onClose={handleCloseModal}
         />

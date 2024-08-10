@@ -36,7 +36,7 @@ export default function RevenueCard({ title, warning, amount, orders }) {
       </div>
       {showMessage && (
         <div className="absolute top-8 left-6 mt-1 bg-white border border-gray-300 p-2 rounded shadow-lg text-sm text-red-500 z-10">
-          This data is for last 30 days from the selected date !
+          This data is for last 30 days from the selected date!
         </div>
       )}
       <div className="flex justify-between items-center">

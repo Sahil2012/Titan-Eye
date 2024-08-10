@@ -8,28 +8,8 @@ import {
 } from "firebase/firestore";
 import * as XLSX from "xlsx";
 
-const OrderDetailsModal = ({ orderId, isOpen, onClose }) => {
-  const [orderDetails, setOrderDetails] = useState(null);
-  const db = getFirestore();
-
-  useEffect(() => {
-    if (!orderId) return;
-
-    const q = query(
-      collection(db, "order_details"),
-      where("billReferenceNumber", "==", orderId)
-    );
-
-    const unsubscribe = onSnapshot(q, (querySnapshot) => {
-      if (!querySnapshot.empty) {
-        setOrderDetails(querySnapshot.docs[0].data());
-      } else {
-        setOrderDetails(null);
-      }
-    });
-
-    return () => unsubscribe();
-  }, [db, orderId]);
+const OrderDetailsModal = ({ orderDetails, isOpen, onClose }) => {
+  console.log(orderDetails);
 
   const handleDownload = () => {
     if (!orderDetails) return;
@@ -39,19 +19,20 @@ const OrderDetailsModal = ({ orderId, isOpen, onClose }) => {
       ["Bill No", "Date", "Dealer Name", "Town", "Stock Type"],
       [
         orderDetails.billReferenceNumber,
-        orderDetails.date,
+        orderDetails.date.toDate().toISOString().split("T")[0],
         orderDetails.dealerName,
         orderDetails.city,
         orderDetails.stockType,
       ],
       [],
-      ["S.No", "SKU Code", "Price", "Quantity", "Total Price"],
+      ["S.No", "SKU Code", "Price", "Quantity", "Total Price", "Status"],
       ...orderDetails.products.map((product, index) => [
         index + 1,
         product.skuCode,
         product.price_per_unit,
         product.quantity,
         product.total_price,
+        product.status,
       ]),
       [],
       ["Total Quantity", "Total UCP", "LESS", "Discount", "Total Value"],
@@ -67,7 +48,10 @@ const OrderDetailsModal = ({ orderId, isOpen, onClose }) => {
     const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
     XLSX.utils.book_append_sheet(workbook, worksheet, "Order Details");
 
-    XLSX.writeFile(workbook, `Order_Details_${orderDetails.billReferenceNumber}.xlsx`);
+    XLSX.writeFile(
+      workbook,
+      `Order_Details_${orderDetails.billReferenceNumber}.xlsx`
+    );
   };
 
   if (!isOpen || !orderDetails) {
@@ -81,7 +65,9 @@ const OrderDetailsModal = ({ orderId, isOpen, onClose }) => {
         <div className="flex flex-col gap-4 mb-4">
           <div className="flex justify-between">
             <div>Bill No: {orderDetails.billReferenceNumber}</div>
-            <div>Date: {orderDetails.date}</div>
+            <div>
+              Date: {orderDetails.date.toDate().toISOString().split("T")[0]}
+            </div>
           </div>
           <div>Dealer Name: {orderDetails.dealerName}</div>
           <div className="flex justify-between">
@@ -95,7 +81,8 @@ const OrderDetailsModal = ({ orderId, isOpen, onClose }) => {
             <div className="mr-10 w-[30%]">SKU Code</div>
             <div className="mr-10 w-[20%]">Quantity</div>
             <div className="mr-10 w-[20%]">Price</div>
-            <div className="w-[25%]">Total Price</div>
+            <div className="mr-10 w-[20%]">Total Price</div>
+            <div className="w-[25%]">Status</div>
           </div>
           {orderDetails.products &&
             orderDetails.products.map((product, index) => (
@@ -105,9 +92,27 @@ const OrderDetailsModal = ({ orderId, isOpen, onClose }) => {
               >
                 <div className="mr-10 w-[5%]">{index + 1}</div>
                 <div className="mr-10 w-[30%]">{product.skuCode}</div>
-                <div className="mr-10 w-[20%]">{product.quantity}</div>
+                <div className="mr-10 w-[20%] text-center">
+                  {product.quantity}
+                </div>
                 <div className="mr-10 w-[20%]">₹{product.price_per_unit}</div>
-                <div className="w-[25%]">₹{product.total_price}</div>
+                <div className="mr-10 w-[20%]">₹{product.total_price}</div>
+                <div className="w-[25%]">
+                  <div>
+                    <select
+                      value={product.status}
+                      
+                      className={`py-1 px-2 border rounded focus:outline-none cursor-pointer ${
+                        product.status === "Pending"
+                          ? "bg-yellow-500"
+                          : "bg-green-500"
+                      } text-white`}
+                    >
+                      <option value="Pending">Pending</option>
+                      <option value="Completed">Completed</option>
+                    </select>
+                  </div>
+                </div>
               </div>
             ))}
         </div>
@@ -125,12 +130,20 @@ const OrderDetailsModal = ({ orderId, isOpen, onClose }) => {
           >
             Download
           </button>
-          <button
-            onClick={onClose}
-            className="py-2 px-4 bg-red-500 text-white rounded hover:bg-red-700"
-          >
-            Close
-          </button>
+          <div>
+            <button
+              onClick={onClose}
+              className="py-2 px-4 mx-2 bg-grey-500 text-white rounded hover:bg-[#4d4d4db4]"
+            >
+              Reject
+            </button>
+            <button
+              onClick={onClose}
+              className="py-2 px-4 bg-red-500 text-white rounded hover:bg-red-700"
+            >
+              Close
+            </button>
+          </div>
         </div>
       </div>
     </div>
