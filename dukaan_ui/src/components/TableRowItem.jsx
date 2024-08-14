@@ -20,7 +20,7 @@ export default function TableRowItem({
       <div className="flex justify-end">
         <div>
           <div className={`py-1 px-2 border rounded focus:outline-none cursor-pointer ${
-              status === "Pending" ? "bg-yellow-500" : "bg-green-500"
+              status === "Pending" ? "bg-yellow-500" : status == "Completed" ? "bg-green-500" : "bg-slate-500"
             } text-white`} onClick={() => handleOpenModal(orderDetail)}>
               {status}
           </div>

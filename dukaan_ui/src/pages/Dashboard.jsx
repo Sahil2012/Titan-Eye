@@ -94,7 +94,7 @@ export default function Dashboard() {
   }, [filterDate, debounceSearchId]);
 
   const handleStatusChange = async (id, newStatus) => {
-    const orderDoc = doc(db, "orders", id);
+    const orderDoc = doc(db, "order_details", id);
     await updateDoc(orderDoc, { status: newStatus });
 
     setOrders((prevOrders) =>
@@ -103,6 +103,13 @@ export default function Dashboard() {
       )
     );
   };
+
+  const updateOrderDetails = async (id , newOrderDetails) => {
+
+    let newStatus = true;
+
+    
+  }
 
   const handleOpenModal = (orderDetail) => {
     
@@ -181,7 +188,7 @@ export default function Dashboard() {
               status={order.status}
               orderDetail={order}
               handleOpenModal={handleOpenModal}
-            /> : activePending && 
+            /> : order.status == 'Pending' ? activePending && 
             <TableRowItem
               key={order.id}
               orderId={order.billReferenceNumber}
@@ -190,13 +197,22 @@ export default function Dashboard() {
               status={order.status}
               orderDetail={order}
               handleOpenModal={handleOpenModal}
-            />
+            /> : activeRejected && <TableRowItem
+            key={order.id}
+            orderId={order.billReferenceNumber}
+            orderDate={order.date.toDate().toISOString().split("T")[0]} // Display formatted date
+            orderAmount={order.totalCost}
+            status={order.status}
+            orderDetail={order}
+            handleOpenModal={handleOpenModal}
+          />
           )) : <div className="bg-gray-300 justify-center flex py-4 text-[#ffffff]">No Records to show</div>}
         </div>
         <OrderDetailsModal
           orderDetails={selectedOrder}
           isOpen={isModalOpen}
           onClose={handleCloseModal}
+          handleStatusChange={handleStatusChange}
         />
       </div>
     </div>

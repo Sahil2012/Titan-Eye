@@ -1,15 +1,27 @@
 import React, { useEffect, useState } from "react";
 import {
   collection,
+  doc,
   getFirestore,
+  updateDoc,
   onSnapshot,
   query,
   where,
+  writeBatch,
 } from "firebase/firestore";
 import * as XLSX from "xlsx";
 
-const OrderDetailsModal = ({ orderDetails, isOpen, onClose }) => {
+const OrderDetailsModal = ({ orderDetails, isOpen, onClose, handleStatusChange}) => {
+  // console.log(orderDetails);
+
+  if (!isOpen || !orderDetails) {
+    return null;
+  }
+
   console.log(orderDetails);
+  
+
+  const [products, setProducts] = useState(orderDetails.products);
 
   const handleDownload = () => {
     if (!orderDetails) return;
@@ -54,9 +66,36 @@ const OrderDetailsModal = ({ orderDetails, isOpen, onClose }) => {
     );
   };
 
-  if (!isOpen || !orderDetails) {
-    return null;
-  }
+  const updateProductDetails = (skuCode, newStatus) => {
+    setProducts((prevProducts) =>
+      prevProducts.map((product) =>
+        product.skuCode === skuCode ? { ...product, status: newStatus } : product
+      )
+    );
+  };
+
+  const handleUpdateClick = async () => {
+    const db = getFirestore();
+    const orderRef = doc(db, "order_details", orderDetails.billReferenceNumber); // Assuming the document ID is the bill reference number
+  
+    // Update products array in Firestore and calculate new order status
+    const updatedProducts = products;
+  
+    const newOrderStatus = updatedProducts.every((product) => product.status === "Completed")
+      ? "Completed"
+      : "Pending";
+  
+    // Update the entire order document, including products array and status
+    await updateDoc(orderRef, {
+      products: updatedProducts,
+      status: newOrderStatus,
+    });
+  
+    // Optionally, you can close the modal after updating
+    onClose();
+  };
+
+ 
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
@@ -84,8 +123,8 @@ const OrderDetailsModal = ({ orderDetails, isOpen, onClose }) => {
             <div className="mr-10 w-[20%]">Total Price</div>
             <div className="w-[25%]">Status</div>
           </div>
-          {orderDetails.products &&
-            orderDetails.products.map((product, index) => (
+          {products &&
+            products.map((product, index) => (
               <div
                 key={index}
                 className="flex py-2 px-2 font-medium border-b-2 border-x-2 justify-between"
@@ -101,8 +140,9 @@ const OrderDetailsModal = ({ orderDetails, isOpen, onClose }) => {
                   <div>
                     <select
                       value={product.status}
-                      
-                      className={`py-1 px-2 border rounded focus:outline-none cursor-pointer ${
+                      disabled={orderDetails.status === 'Rejected'}
+                      onChange={(e) => updateProductDetails(product.skuCode,e.target.value)}
+                      className={`py-1 px-2 border rounded focus:outline-none cursor-pointer dis ${
                         product.status === "Pending"
                           ? "bg-yellow-500"
                           : "bg-green-500"
@@ -124,15 +164,28 @@ const OrderDetailsModal = ({ orderDetails, isOpen, onClose }) => {
           <div>Total Value: ₹{orderDetails.totalValue}</div>
         </div>
         <div className="flex justify-between mt-4">
+          <div>
           <button
             onClick={handleDownload}
-            className="py-2 px-4 bg-green-500 text-white rounded hover:bg-green-700"
+            className="py-2 px-4 mx-2 bg-green-500 text-white rounded hover:bg-green-700"
           >
             Download
           </button>
+
+          <button
+            className="py-2 px-4 bg-green-500 text-white rounded hover:bg-green-700"
+            onClick={handleUpdateClick}
+          >
+            Update
+          </button>
+          </div>
+          
           <div>
             <button
-              onClick={onClose}
+              onClick= {() => {
+                handleStatusChange(orderDetails.billReferenceNumber,"Rejected");
+                onClose();
+              }}
               className="py-2 px-4 mx-2 bg-grey-500 text-white rounded hover:bg-[#4d4d4db4]"
             >
               Reject
