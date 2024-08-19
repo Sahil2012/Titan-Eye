@@ -150,13 +150,13 @@ export default function Dashboard() {
   return (
     <div className="flex relative">
       <div className="grow">
-        <div className="mt-4 mx-2 p-4">
-        <div className="flex mb-4">
+        <div className="mt-4 md:p-4 md:mx-2">
+        <div className="flex mb-4 flex-wrap p-4">
           <RevenueCard title={"Amount Processed"} amount={processedAmount} orders={completeCount} warning={true}/>
           <RevenueCard title={"Amount Pending"} amount={pendingAmount} orders={pendingCount} warning={true}/>
         </div>
           
-        <div className="flex gap-4 items-center">
+        <div className="flex md:gap-2 lg:gap-4  items-center">
           <OvalButtons text={"Completed"} count={completeCount} bgColor={`${activeComplete ? 'bg-blue-500' : 'bg-grey-700'}`} filterMe={filterCompleted} />
           <OvalButtons text={"Pending"} count={pendingCount} bgColor={`${activePending ? 'bg-blue-500' : 'bg-grey-700'}`} filterMe={filterPending}/>
           <OvalButtons text={"Rejected"} count={rejectedCount} bgColor={`${activeRejected ? 'bg-blue-500' : 'bg-grey-700'}`} filterMe={filterRejected}/>

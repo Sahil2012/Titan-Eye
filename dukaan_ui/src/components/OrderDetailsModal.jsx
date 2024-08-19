@@ -11,7 +11,12 @@ import {
 } from "firebase/firestore";
 import * as XLSX from "xlsx";
 
-const OrderDetailsModal = ({ orderDetails, isOpen, onClose, handleStatusChange}) => {
+const OrderDetailsModal = ({
+  orderDetails,
+  isOpen,
+  onClose,
+  handleStatusChange,
+}) => {
   // console.log(orderDetails);
 
   if (!isOpen || !orderDetails) {
@@ -19,7 +24,6 @@ const OrderDetailsModal = ({ orderDetails, isOpen, onClose, handleStatusChange})
   }
 
   console.log(orderDetails);
-  
 
   const [products, setProducts] = useState(orderDetails.products);
 
@@ -55,7 +59,9 @@ const OrderDetailsModal = ({ orderDetails, isOpen, onClose, handleStatusChange})
         orderDetails.discountValue,
         orderDetails.totalValue,
       ],
-      orderDetails.stockType === "Sample Frame" && ["Disclaimer : Please note that the total value indicated above is an approximate amount. As this is a sample, the final value may vary."]
+      orderDetails.stockType === "Sample Frame" && [
+        "Disclaimer : Please note that the total value indicated above is an approximate amount. As this is a sample, the final value may vary.",
+      ],
     ];
 
     const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
@@ -70,7 +76,9 @@ const OrderDetailsModal = ({ orderDetails, isOpen, onClose, handleStatusChange})
   const updateProductDetails = (skuCode, newStatus) => {
     setProducts((prevProducts) =>
       prevProducts.map((product) =>
-        product.skuCode === skuCode ? { ...product, status: newStatus } : product
+        product.skuCode === skuCode
+          ? { ...product, status: newStatus }
+          : product
       )
     );
   };
@@ -78,25 +86,25 @@ const OrderDetailsModal = ({ orderDetails, isOpen, onClose, handleStatusChange})
   const handleUpdateClick = async () => {
     const db = getFirestore();
     const orderRef = doc(db, "order_details", orderDetails.billReferenceNumber); // Assuming the document ID is the bill reference number
-  
+
     // Update products array in Firestore and calculate new order status
     const updatedProducts = products;
-  
-    const newOrderStatus = updatedProducts.every((product) => product.status === "Completed")
+
+    const newOrderStatus = updatedProducts.every(
+      (product) => product.status === "Completed"
+    )
       ? "Completed"
       : "Pending";
-  
+
     // Update the entire order document, including products array and status
     await updateDoc(orderRef, {
       products: updatedProducts,
       status: newOrderStatus,
     });
-  
+
     // Optionally, you can close the modal after updating
     onClose();
   };
-
- 
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
@@ -115,80 +123,115 @@ const OrderDetailsModal = ({ orderDetails, isOpen, onClose, handleStatusChange})
             <div>Stock Type: {orderDetails.stockType}</div>
           </div>
         </div>
+
         <div className="my-4 overflow-x-auto">
-          <div className="flex font-medium bg-blue-500 text-white py-2 border-b-2 border-x-2 px-2">
-            <div className="mr-10 w-[5%]">S.No.</div>
-            <div className="mr-10 w-[30%]">SKU Code</div>
-            <div className="mr-10 w-[20%]">Quantity</div>
-            <div className="mr-10 w-[20%]">Price</div>
-            <div className="mr-10 w-[20%]">Total Price</div>
-            <div className="w-[25%]">Status</div>
-          </div>
-          {products &&
-            products.map((product, index) => (
-              <div
-                key={index}
-                className="flex py-2 px-2 font-medium border-b-2 border-x-2 justify-between"
-              >
-                <div className="mr-10 w-[5%]">{index + 1}</div>
-                <div className="mr-10 w-[30%]">{product.skuCode}</div>
-                <div className="mr-10 w-[20%] text-center">
-                  {product.quantity}
-                </div>
-                <div className="mr-10 w-[20%]">₹{product.price_per_unit}</div>
-                <div className="mr-10 w-[20%]">₹{product.total_price}</div>
-                <div className="w-[25%]">
-                  <div>
-                    <select
-                      value={product.status}
-                      disabled={orderDetails.status === 'Rejected'}
-                      onChange={(e) => updateProductDetails(product.skuCode,e.target.value)}
-                      className={`py-1 px-2 border rounded focus:outline-none cursor-pointer dis ${
-                        product.status === "Pending"
-                          ? "bg-yellow-500"
-                          : "bg-green-500"
-                      } text-white`}
-                    >
-                      <option value="Pending">Pending</option>
-                      <option value="Completed">Completed</option>
-                    </select>
-                  </div>
-                </div>
-              </div>
-            ))}
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-blue-500 text-white">
+              <tr>
+                <th className="px-4 py-2 text-left text-sm font-medium">
+                  S.No.
+                </th>
+                <th className="px-4 py-2 text-left text-sm font-medium">
+                  SKU Code
+                </th>
+                <th className="px-4 py-2 text-left text-sm font-medium">
+                  Quantity
+                </th>
+                <th className="px-4 py-2 text-left text-sm font-medium">
+                  Price
+                </th>
+                <th className="px-4 py-2 text-left text-sm font-medium">
+                  Total Price
+                </th>
+                <th className="px-4 py-2 text-left text-sm font-medium">
+                  Status
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {products &&
+                products.map((product, index) => (
+                  <tr key={index} className="bg-grey-700">
+                    <td className="px-4 py-2 text-sm font-medium">
+                      {index + 1}
+                    </td>
+                    <td className="px-4 py-2 text-sm font-medium">
+                      {product.skuCode}
+                    </td>
+                    <td className="px-4 py-2 text-sm text-center font-medium">
+                      {product.quantity}
+                    </td>
+                    <td className="px-4 py-2 text-sm font-medium">
+                      ₹{product.price_per_unit}
+                    </td>
+                    <td className="px-4 py-2 text-sm font-medium">
+                      ₹{product.total_price}
+                    </td>
+                    <td className="px-4 py-2 text-sm font-medium">
+                      <select
+                        value={product.status}
+                        disabled={orderDetails.status === "Rejected"}
+                        onChange={(e) =>
+                          updateProductDetails(product.skuCode, e.target.value)
+                        }
+                        className={`py-1 px-2 border rounded focus:outline-none cursor-pointer ${
+                          product.status === "Pending"
+                            ? "bg-yellow-500"
+                            : "bg-green-500"
+                        } text-white`}
+                      >
+                        <option value="Pending">Pending</option>
+                        <option value="Completed">Completed</option>
+                      </select>
+                    </td>
+                  </tr>
+                ))}
+            </tbody>
+          </table>
         </div>
-        
+
         <div className="gap-4 mb-4">
           <div>Total Quantity: {orderDetails.totalQuantity}</div>
           <div>Total UCP: ₹{orderDetails.totalCost}</div>
           <div>LESS: {orderDetails.discount} %</div>
           <div>Discount: ₹{orderDetails.discountValue}</div>
           <div>Total Value: ₹{orderDetails.totalValue}</div>
-          {orderDetails.stockType === "Sample Frame" && <div className="font-bold text-red-500">
-          Disclaimer: <span className="text-red-500"> Please note that the total value indicated above is an approximate amount. As this is a sample, the final value may vary. </span>
-          </div>}
+          {orderDetails.stockType === "Sample Frame" && (
+            <div className="font-bold text-red-500">
+              Disclaimer:{" "}
+              <span className="text-red-500">
+                {" "}
+                Please note that the total value indicated above is an
+                approximate amount. As this is a sample, the final value may
+                vary.{" "}
+              </span>
+            </div>
+          )}
         </div>
         <div className="flex justify-between mt-4">
           <div>
-          <button
-            onClick={handleDownload}
-            className="py-2 px-4 mx-2 bg-green-500 text-white rounded hover:bg-green-700"
-          >
-            Download
-          </button>
+            <button
+              onClick={handleDownload}
+              className="py-2 px-4 mx-2 bg-green-500 text-white rounded hover:bg-green-700"
+            >
+              Download
+            </button>
 
-          <button
-            className="py-2 px-4 bg-green-500 text-white rounded hover:bg-green-700"
-            onClick={handleUpdateClick}
-          >
-            Update
-          </button>
+            <button
+              className="py-2 px-4 bg-green-500 text-white rounded hover:bg-green-700"
+              onClick={handleUpdateClick}
+            >
+              Update
+            </button>
           </div>
-          
+
           <div>
             <button
-              onClick= {() => {
-                handleStatusChange(orderDetails.billReferenceNumber,"Rejected");
+              onClick={() => {
+                handleStatusChange(
+                  orderDetails.billReferenceNumber,
+                  "Rejected"
+                );
                 onClose();
               }}
               className="py-2 px-4 mx-2 bg-grey-500 text-white rounded hover:bg-[#4d4d4db4]"

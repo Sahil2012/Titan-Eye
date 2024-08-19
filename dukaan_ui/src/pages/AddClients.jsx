@@ -31,7 +31,7 @@ export default function AddClients() {
   }, []);
 
   const addClientToDb = async () => {
-    if (clientName != "") {
+    if (clientName !== "") {
       const clientExists = clients.some(
         (client) => client.name === clientName
       );
@@ -47,20 +47,20 @@ export default function AddClients() {
         cl.push({ name: clientName, id: op.id });
         setClients(cl);
       } catch (error) {
-        alert("Something went wrong try to add later.");
+        alert("Something went wrong, try to add later.");
       }
     } else {
       alert("Enter Client name to add.");
     }
   };
+
   return (
     <>
-      <div className="w-[300px] my-6 ml-[100px]">
-        <div className="grow flex justify-center gap-4">
+      <div className="w-full max-w-md my-6 mx-auto px-4">
+        <div className="flex justify-center gap-4">
           <div
-            className={`grow text-grey-500  flex items-center 
-              bg-grey-300 border-2
-              px-2 py-2 rounded-lg`}
+            className="grow text-grey-500 flex items-center bg-grey-300 
+              border-2 px-2 py-2 rounded-lg"
           >
             <input
               className="bg-inherit items-center text-sm grow focus:outline-none"
@@ -79,19 +79,18 @@ export default function AddClients() {
           </button>
         </div>
       </div>
-      <div className="ml-[100px] mb-2">
-        <div className="flex  w-[70vw] items-start font-medium bg-blue-500 text-white py-2 px-2">
-          <div className="mr-10 w-[20px]">S.No. </div>
-          <div>Name </div>
+      <div className="mx-auto px-4 mb-2 max-w-3xl">
+        <div className="flex w-full items-start font-medium bg-blue-500 text-white py-2 px-2">
+          <div className="mr-10 w-1/12">S.No.</div>
+          <div className="w-11/12">Name</div>
         </div>
-        <div></div>
         {clients.map((c, index) => (
           <div
             key={c.id}
-            className="flex  w-[70vw] py-2 px-2 font-medium border-b-2 border-x-2"
+            className="flex w-full py-2 px-2 font-medium border-b-2 border-x-2"
           >
-            <div className="mr-10 w-[20px]">{index + 1} </div>
-            <div>{c.name}</div>
+            <div className="mr-10 w-1/12">{index + 1}</div>
+            <div className="w-11/12">{c.name}</div>
           </div>
         ))}
       </div>
