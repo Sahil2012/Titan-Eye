@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import SearchBar from "../components/SearchBar";
 import TableHead from "../components/TableHead";
 import TableRowItem from "../components/TableRowItem";
-import UtilityIcons from "../components/UtilityIcons";
 import RevenueCard from "../components/RevenueCard";
 import {
   getFirestore,
@@ -36,6 +35,9 @@ export default function Dashboard() {
   const [pendingAmount,setAmountPending] = useState(0);
   const [rejectedCount,setRejectedCount] = useState(0);
   const [activeRejected,setActiveRejected] = useState(true);
+  const [page, setPage] = useState(1);
+  const pageSize = 10;
+
 
   // Calculate the date 30 days ago from the selected date
   const getStartDate = () => {
@@ -59,6 +61,7 @@ export default function Dashboard() {
         where("date", "<", Timestamp.fromDate(endDate)),   // Use Firestore Timestamp
         orderBy("date", "desc")
       );
+      setPage(1);
     }
 
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
@@ -141,6 +144,9 @@ export default function Dashboard() {
     setActiveRejected(!activeRejected);
     
   }
+  const paginate = (pageNumber) => {
+    setPage(pageNumber);
+  }
   return (
     <div className="flex relative">
       <div className="grow">
@@ -178,7 +184,7 @@ export default function Dashboard() {
             </div>
           </div>
           <TableHead orderIcon={false} feesIcon={true} />
-          {orders.length !== 0 ? orders.map((order) => (
+          {orders.length !== 0 ? orders.slice(page * pageSize - pageSize, page * pageSize).map((order) => (
             order.status == 'Completed' ? activeComplete && 
             <TableRowItem
               key={order.id}
@@ -208,6 +214,22 @@ export default function Dashboard() {
           />
           )) : <div className="bg-gray-300 justify-center flex py-4 text-[#ffffff]">No Records to show</div>}
         </div>
+        <div className="flex justify-between mt-6 mx-2">
+        <button
+          onClick={() => paginate(page - 1)}
+          disabled={page === 1}
+          className="bg-blue-500 text-white font-semibold py-2 px-4 rounded-md hover:bg-blue-600 mr-2"
+        >
+          Previous
+        </button>
+        <button
+          onClick={() => paginate(page + 1)}
+          disabled={!(page < orders.length / pageSize)}
+          className="bg-blue-500 text-white font-semibold py-2 px-4 rounded-md hover:bg-blue-600"
+        >
+          Next
+        </button>
+      </div>
         <OrderDetailsModal
           orderDetails={selectedOrder}
           isOpen={isModalOpen}

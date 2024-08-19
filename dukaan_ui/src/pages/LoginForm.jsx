@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getAuth, signInWithEmailAndPassword } from 'firebase/auth';
+import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from 'firebase/auth';
 import '../firebaseConfig.js'; 
 
 const LoginForm = () => {
@@ -9,6 +9,18 @@ const LoginForm = () => {
   const [error, setError] = useState('');
   const navigate = useNavigate();
   const auth = getAuth();
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        // User is signed in, redirect to dashboard
+        navigate('/dashboard');
+      }
+    });
+
+    // Cleanup subscription on unmount
+    return () => unsubscribe();
+  }, [auth, navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();

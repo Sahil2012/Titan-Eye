@@ -7,6 +7,7 @@ import ManageProducts from "./pages/ManageProducts";
 import { AuthProvider } from "./contexts/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import AppBar from "./components/AppBar";
+import OrderDetails from "./pages/OrderDetails";
 
 export default function App() {
   return (

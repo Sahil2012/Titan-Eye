@@ -55,6 +55,7 @@ const OrderDetailsModal = ({ orderDetails, isOpen, onClose, handleStatusChange})
         orderDetails.discountValue,
         orderDetails.totalValue,
       ],
+      orderDetails.stockType === "Sample Frame" && ["Disclaimer : Please note that the total value indicated above is an approximate amount. As this is a sample, the final value may vary."]
     ];
 
     const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
@@ -156,12 +157,16 @@ const OrderDetailsModal = ({ orderDetails, isOpen, onClose, handleStatusChange})
               </div>
             ))}
         </div>
+        
         <div className="gap-4 mb-4">
           <div>Total Quantity: {orderDetails.totalQuantity}</div>
           <div>Total UCP: ₹{orderDetails.totalCost}</div>
           <div>LESS: {orderDetails.discount} %</div>
           <div>Discount: ₹{orderDetails.discountValue}</div>
           <div>Total Value: ₹{orderDetails.totalValue}</div>
+          {orderDetails.stockType === "Sample Frame" && <div className="font-bold text-red-500">
+          Disclaimer: <span className="text-red-500"> Please note that the total value indicated above is an approximate amount. As this is a sample, the final value may vary. </span>
+          </div>}
         </div>
         <div className="flex justify-between mt-4">
           <div>
