@@ -26,6 +26,7 @@ const OrderDetailsModal = ({
   console.log(orderDetails);
 
   const [products, setProducts] = useState(orderDetails.products);
+  const [allStatus,setAllStatus] = useState(true);
 
   const handleDownload = () => {
     if (!orderDetails) return;
@@ -104,6 +105,16 @@ const OrderDetailsModal = ({
 
     // Optionally, you can close the modal after updating
     onClose();
+  };
+
+  const toggleAllProductsStatus = () => {
+    let newStatus = allStatus ? "Pending" : "Completed";
+
+    setProducts((prevProducts) =>
+      prevProducts.map((product) => ({ ...product, status: newStatus }))
+    );
+
+    setAllStatus(!allStatus);
   };
 
   return (
@@ -188,6 +199,15 @@ const OrderDetailsModal = ({
                 ))}
             </tbody>
           </table>
+        </div>
+
+        <div className="my-4">
+          <button
+            onClick={toggleAllProductsStatus}
+            className="py-2 px-4 bg-blue-500 text-white rounded hover:bg-blue-700"
+          >
+            Mark as {allStatus ? 'Pending' : 'Completed'}
+          </button>
         </div>
 
         <div className="gap-4 mb-4">

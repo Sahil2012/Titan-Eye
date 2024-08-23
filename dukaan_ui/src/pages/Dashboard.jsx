@@ -16,7 +16,7 @@ import {
 } from "firebase/firestore";
 import useDebounce from "../hooks/useDebounce";
 import OrderDetailsModal from "../components/OrderDetailsModal";
-import { addDays, endOfDay, format, roundToNearestHours, startOfDay, subDays } from "date-fns";  // Import date-fns for date manipulation
+import { addDays, endOfDay, format, roundToNearestHours, startOfDay, startOfMonth, subDays } from "date-fns";  // Import date-fns for date manipulation
 import OvalButtons from "../components/OvalButtons";
 
 export default function Dashboard() {
@@ -39,9 +39,9 @@ export default function Dashboard() {
   const pageSize = 10;
 
 
-  // Calculate the date 30 days ago from the selected date
+  // Calculate the start date of the month from the selected date
   const getStartDate = () => {
-    return subDays(filterDate, 30);
+    return startOfMonth(filterDate);
   };
 
   useEffect(() => {
