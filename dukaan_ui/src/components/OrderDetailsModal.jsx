@@ -23,7 +23,7 @@ const OrderDetailsModal = ({
     return null;
   }
 
-  console.log(orderDetails);
+  // console.log(orderDetails);
 
   const [products, setProducts] = useState(orderDetails.products);
   const [allStatus,setAllStatus] = useState(true);

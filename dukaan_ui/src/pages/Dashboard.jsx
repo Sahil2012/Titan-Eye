@@ -117,7 +117,7 @@ export default function Dashboard() {
   const handleOpenModal = (orderDetail) => {
     
     setSelectedOrder(orderDetail);
-    console.log(orderDetail);
+    // console.log(orderDetail);
     setIsModalOpen(true);
   };
 
@@ -127,20 +127,20 @@ export default function Dashboard() {
   };
 
   const filterCompleted = () => {
-    console.log("Comp");
+    // console.log("Comp");
     setActiveComplete(!activeComplete);
     // setActivePending(false);
   }
 
   const filterPending = () => {
-    console.log("Pen");
+    // console.log("Pen");
     // setCompleteCount(0);
     setActivePending(!activePending);
     // setActiveComplete(false);
   }
 
   const filterRejected = () => {
-    console.log("Rej");
+    // console.log("Rej");
     setActiveRejected(!activeRejected);
     
   }
