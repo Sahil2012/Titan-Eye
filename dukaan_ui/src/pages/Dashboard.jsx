@@ -18,6 +18,8 @@ import useDebounce from "../hooks/useDebounce";
 import OrderDetailsModal from "../components/OrderDetailsModal";
 import { addDays, endOfDay, format, roundToNearestHours, startOfDay, startOfMonth, subDays } from "date-fns";  // Import date-fns for date manipulation
 import OvalButtons from "../components/OvalButtons";
+import { Button } from "@mui/material";
+import * as XLSX from "xlsx";
 
 export default function Dashboard() {
   const db = getFirestore();
@@ -74,12 +76,12 @@ export default function Dashboard() {
       querySnapshot.forEach((doc) => {
         ordersData.push({ id: doc.id, ...doc.data() });
         if(doc.data().status == 'Completed') {
-          procAmt += doc.data().totalCost;
+          procAmt += (doc.data().totalCost);
           comp ++;
         } else if(doc.data().status == 'Rejected'){
           rej ++;
         } else {
-          penAmt += doc.data().totalCost;
+          penAmt += doc.data().totalPendingCost;
           pen ++;
         }
       });
@@ -96,6 +98,38 @@ export default function Dashboard() {
     return () => unsubscribe();
   }, [filterDate, debounceSearchId]);
 
+  const handleDownloadExcel = () => {
+
+    const workbook = XLSX.utils.book_new();
+
+    let workSheet = [["Bill No","Dealer Name","SKU Code","Price per unit","Quantity","Price"]];
+
+    orders.forEach((ord) => {
+      if(ord.status === "Pending") {
+        ord.products.forEach((pro) => {
+          if(pro.status === "Pending") {
+            workSheet.push([ord.billReferenceNumber,
+              ord.dealerName,
+              pro.skuCode,
+              pro.price_per_unit,
+              pro.quantity,
+              pro.total_price
+             ]);
+          }
+        })
+      }
+    });
+
+    const interWork = XLSX.utils.aoa_to_sheet(workSheet);
+    XLSX.utils.book_append_sheet(workbook, interWork, "Order Details Pending");
+
+    XLSX.writeFile(
+      workbook,
+      `Order_Details_${Date.now()}.xlsx`
+    );
+    
+  }
+
   const handleStatusChange = async (id, newStatus) => {
     const orderDoc = doc(db, "order_details", id);
     await updateDoc(orderDoc, { status: newStatus });
@@ -107,11 +141,9 @@ export default function Dashboard() {
     );
   };
 
-  const updateOrderDetails = async (id , newOrderDetails) => {
-
-    let newStatus = true;
-
-    
+  const updateAmountProcessed = (pendingDiff,processedDiff) => {
+    setAmountPending(pendingAmount + pendingDiff);
+    setAmountProcessed(processedAmount + processedDiff);
   }
 
   const handleOpenModal = (orderDetail) => {
@@ -153,9 +185,9 @@ export default function Dashboard() {
         <div className="mt-4 md:p-4 md:mx-2">
         <div className="flex mb-4 flex-wrap p-4">
           <RevenueCard title={"Amount Processed"} amount={processedAmount} orders={completeCount} warning={true}/>
-          <RevenueCard title={"Amount Pending"} amount={pendingAmount} orders={pendingCount} warning={true}/>
+          <RevenueCard title={"Amount Pending"} amount={pendingAmount} orders={pendingCount} warning={true} handleDownloadExcel={handleDownloadExcel}/>
         </div>
-          
+        
         <div className="flex md:gap-2 lg:gap-4  items-center">
           <OvalButtons text={"Completed"} count={completeCount} bgColor={`${activeComplete ? 'bg-blue-500' : 'bg-grey-700'}`} filterMe={filterCompleted} />
           <OvalButtons text={"Pending"} count={pendingCount} bgColor={`${activePending ? 'bg-blue-500' : 'bg-grey-700'}`} filterMe={filterPending}/>
@@ -235,6 +267,7 @@ export default function Dashboard() {
           isOpen={isModalOpen}
           onClose={handleCloseModal}
           handleStatusChange={handleStatusChange}
+          updateAmountProcessed={updateAmountProcessed}
         />
       </div>
     </div>

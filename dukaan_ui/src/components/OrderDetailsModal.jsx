@@ -16,6 +16,7 @@ const OrderDetailsModal = ({
   isOpen,
   onClose,
   handleStatusChange,
+  updateAmountProcessed
 }) => {
   // console.log(orderDetails);
 
@@ -26,7 +27,11 @@ const OrderDetailsModal = ({
   // console.log(orderDetails);
 
   const [products, setProducts] = useState(orderDetails.products);
-  const [allStatus,setAllStatus] = useState(true);
+  const [allStatus, setAllStatus] = useState(true);
+  const [pendingAmount, setPendingAmount] = useState(
+    orderDetails.totalPendingCost
+  );
+
 
   const handleDownload = () => {
     if (!orderDetails) return;
@@ -75,12 +80,14 @@ const OrderDetailsModal = ({
   };
 
   const updateProductDetails = (skuCode, newStatus) => {
+
     setProducts((prevProducts) =>
-      prevProducts.map((product) =>
-        product.skuCode === skuCode
+      prevProducts.map((product) => {
+        
+        return product.skuCode === skuCode
           ? { ...product, status: newStatus }
-          : product
-      )
+          : product;
+      })
     );
   };
 
@@ -95,13 +102,25 @@ const OrderDetailsModal = ({
       (product) => product.status === "Completed"
     )
       ? "Completed"
-      : "Pending";
+      : "Pending";    
+    
+      let pendingCost = 0;
+      pendingCost = products.reduce((total, product) => {
+        return product.status === "Pending" ? total + product.total_price : total;
+    }, 0);
+      // console.log(pendingAmount);
 
+      let pending = pendingCost - orderDetails.totalPendingCost;
+      let processed = -1 * pending;
     // Update the entire order document, including products array and status
     await updateDoc(orderRef, {
       products: updatedProducts,
       status: newOrderStatus,
+      totalPendingCost: pendingCost
     });
+
+
+    updateAmountProcessed(pending,processed);
 
     // Optionally, you can close the modal after updating
     onClose();
@@ -113,7 +132,6 @@ const OrderDetailsModal = ({
     setProducts((prevProducts) =>
       prevProducts.map((product) => ({ ...product, status: newStatus }))
     );
-
     setAllStatus(!allStatus);
   };
 
@@ -206,7 +224,7 @@ const OrderDetailsModal = ({
             onClick={toggleAllProductsStatus}
             className="py-2 px-4 bg-blue-500 text-white rounded hover:bg-blue-700"
           >
-            Mark as {allStatus ? 'Pending' : 'Completed'}
+            Mark all as {allStatus ? "Pending" : "Completed"}
           </button>
         </div>
 

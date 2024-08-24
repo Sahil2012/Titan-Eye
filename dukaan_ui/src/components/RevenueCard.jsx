@@ -1,6 +1,6 @@
+import { Download, DownloadOutlined } from "@mui/icons-material";
 import React, { useState } from "react";
-
-export default function RevenueCard({ title, warning, amount, orders }) {
+export default function RevenueCard({ title, warning, amount, orders, handleDownloadExcel }) {
   const [showMessage, setShowMessage] = useState(false);
 
   const handleWarningClick = () => {
@@ -36,16 +36,19 @@ export default function RevenueCard({ title, warning, amount, orders }) {
       </div>
       {showMessage && (
         <div className="absolute top-8 left-6 mt-1 bg-white border border-gray-300 p-2 rounded shadow-lg text-sm text-red-500 z-10">
-          This data is for last 30 days from the selected date!
+          This data is for the month of selected date!
         </div>
       )}
       <div className="flex justify-between items-center">
         <div className="text-2xl font-semibold">₹ {amount}</div>
+        <div className="flex gap-2">
         {orders ? (
           <div className="flex text-blue-500 underline">
             <div>{orders} orders</div>
           </div>
         ) : null}
+        {handleDownloadExcel ? (<div onClick={handleDownloadExcel}> <Download /> </div>) : null}
+        </div>
       </div>
     </div>
   );

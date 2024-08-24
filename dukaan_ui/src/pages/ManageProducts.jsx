@@ -4,6 +4,8 @@ import {
   doc,
   getFirestore,
   onSnapshot,
+  writeBatch,
+  getDocs,
   query,
   setDoc,
 } from "firebase/firestore";
@@ -103,7 +105,56 @@ export default function ManageProducts() {
     setPrice("");
   };
 
-  const handleFileUpload = (e) => {
+  // const handleFileUpload = (e) => {
+  //   const file = e.target.files[0];
+  //   if (!file) return;
+
+  //   const reader = new FileReader();
+  //   reader.onload = async (event) => {
+  //     const data = new Uint8Array(event.target.result);
+  //     const workbook = XLSX.read(data, { type: "array" });
+  //     const sheetName = workbook.SheetNames[0];
+  //     const worksheet = workbook.Sheets[sheetName];
+  //     const jsonData = XLSX.utils.sheet_to_json(worksheet);
+
+  //     const newProducts = [];
+  //     let allSuccess = true;
+
+  //     for (const product of jsonData) {
+  //       const { stock_no, price } = product;
+  //       if (stock_no && price) {
+  //         const productExists = products.some((p) => p.stock_no === stock_no);
+
+  //         if (!productExists) {
+  //           try {
+  //             const clientCollection = collection(db, "products");
+  //             const productRef = doc(clientCollection, stock_no);
+  //             await setDoc(productRef, { stock_no, price });
+  //             newProducts.push({ stock_no, price, id: stock_no });
+  //           } catch (error) {
+  //             console.error(`Error adding product with Stock No ${stock_no}:`, error);
+  //             allSuccess = false;
+  //             setModalMessage(`Error adding product with Stock No ${stock_no}`);
+  //             setOpenErrorModal(true);
+  //             break;
+  //           }
+  //         }
+  //       }
+  //     }
+
+  //     if (allSuccess) {
+  //       setProducts((prevProducts) => [...prevProducts, ...newProducts]);
+  //       setModalMessage(`Products successfully added from ${file.name}`);
+  //       setOpenSuccessModal(true);
+  //     }
+
+  //     // Reset the file input value by changing its key
+  //     setFileInputKey(Date.now());
+  //   };
+  //   reader.readAsArrayBuffer(file);
+  // };
+
+  const handleFileUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
@@ -115,33 +166,38 @@ export default function ManageProducts() {
       const worksheet = workbook.Sheets[sheetName];
       const jsonData = XLSX.utils.sheet_to_json(worksheet);
 
+      // Clear existing products in Firestore
+      const batch = writeBatch(db);
+      const productsCollection = collection(db, "products");
+      const querySnapshot = await getDocs(productsCollection);
+      querySnapshot.forEach((doc) => {
+        batch.delete(doc.ref);
+      });
+      await batch.commit();
+
+      // Add new products from Excel
       const newProducts = [];
       let allSuccess = true;
 
       for (const product of jsonData) {
         const { stock_no, price } = product;
         if (stock_no && price) {
-          const productExists = products.some((p) => p.stock_no === stock_no);
-
-          if (!productExists) {
-            try {
-              const clientCollection = collection(db, "products");
-              const productRef = doc(clientCollection, stock_no);
-              await setDoc(productRef, { stock_no, price });
-              newProducts.push({ stock_no, price, id: stock_no });
-            } catch (error) {
-              console.error(`Error adding product with Stock No ${stock_no}:`, error);
-              allSuccess = false;
-              setModalMessage(`Error adding product with Stock No ${stock_no}`);
-              setOpenErrorModal(true);
-              break;
-            }
+          try {
+            const productRef = doc(productsCollection, stock_no);
+            await setDoc(productRef, { stock_no, price });
+            newProducts.push({ stock_no, price, id: stock_no });
+          } catch (error) {
+            console.error(`Error adding product with Stock No ${stock_no}:`, error);
+            allSuccess = false;
+            setModalMessage(`Error adding product with Stock No ${stock_no}`);
+            setOpenErrorModal(true);
+            break;
           }
         }
       }
 
       if (allSuccess) {
-        setProducts((prevProducts) => [...prevProducts, ...newProducts]);
+        setProducts(newProducts);
         setModalMessage(`Products successfully added from ${file.name}`);
         setOpenSuccessModal(true);
       }
